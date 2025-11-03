@@ -13,9 +13,16 @@ import { pixelToSeconds } from './utils.js';
 // The AudioContext object is the main "entry point" into the Web Audio API
 let ctx;
 
-const soundURL =
-    'https://mainline.i3s.unice.fr/WAMSampler2/audio/808/Maracas%20808.wav';
-let decodedSound;
+const soundURL = [
+    'https://mainline.i3s.unice.fr/mooc/shoot2.mp3',
+    'https://mainline.i3s.unice.fr/mooc/drums.mp3',
+    'https://mainline.i3s.unice.fr/mooc/shoot1.mp3'
+];
+
+let decodedSound = []; // the decoded sound will be stored here
+let currentSoundIndex = 0;
+// Store trim bar positions for each sound
+let trimBarPositions = [];
 
 let canvas, canvasOverlay;
 // waveform drawer is for drawing the waveform in the canvas
@@ -25,17 +32,13 @@ let waveformDrawer, trimbarsDrawer;
 let mousePos = { x: 0, y: 0 }
 // The button for playing the sound
 let playButton = document.querySelector("#playButton");
+
 // disable the button until the sound is loaded and decoded
 playButton.disabled = true;
 let debugButton; 
 
 window.onload = async function init() {
     ctx = new AudioContext();
-
-     debugButton = document.querySelector("#debug");
-     debugButton.onclick = function(evt) {
-        waveformDrawer.drawWave(0, canvas.height);
-     };
 
     // two canvas : one for drawing the waveform, the other for the trim bars
     canvas = document.querySelector("#myCanvas");
@@ -45,14 +48,40 @@ window.onload = async function init() {
     waveformDrawer = new WaveformDrawer();
     trimbarsDrawer = new TrimbarsDrawer(canvasOverlay, 100, 200);
 
+    for (let i = 0; i < soundURL.length; i++) {
+        try {
+            let decoded = await loadAndDecodeSound(soundURL[i], ctx);
+            decodedSound.push(decoded);
+            // Initialize trim bar positions for each sound
+            trimBarPositions.push({ left: 100, right: 200 });
+            console.log("Sound " + (i + 1) + " loaded successfully");
+        } catch (error) {
+            console.error("Error loading sound " + (i + 1) + ":", error);
+            // Skip this sound and continue with the next one
+        }
+    }
+
+    // Check if at least one sound was loaded
+    if (decodedSound.length === 0) {
+        alert("No sounds could be loaded!");
+        return;
+    }
+
+    // Generate a PLAY button for each sound AFTER loading all sounds
+    for (let i = 0; i < decodedSound.length; i++) {
+        createPlayButton(i);
+    }
+
     // load and decode the sound
     // this is asynchronous, we use await to wait for the end of the loading and decoding
     // before going to the next instruction
     // Note that we cannot use await outside an async function
     // so we had to declare the init function as async
-    decodedSound = await loadAndDecodeSound(soundURL, ctx);
-    waveformDrawer.init(decodedSound, canvas, '#83E83E');
+    waveformDrawer.init(decodedSound[0], canvas, '#83E83E');
     waveformDrawer.drawWave(0, canvas.height);
+
+    displaySound(currentSoundIndex);
+
 
     // we enable the play sound button, now that the sound is loaded and decoded
     playButton.disabled = false;
@@ -60,11 +89,12 @@ window.onload = async function init() {
     // Event listener for the button. When the button is pressed, we play the sound
     playButton.onclick = function (evt) {
         // get start and end time (in seconds) from trim bars position.x (in pixels)
-        let start = pixelToSeconds(trimbarsDrawer.leftTrimBar.x, decodedSound.duration, canvas.width);
-        let end = pixelToSeconds(trimbarsDrawer.rightTrimBar.x, decodedSound.duration, canvas.width);
+        let sound = decodedSound[currentSoundIndex];
+        let start = pixelToSeconds(trimbarsDrawer.leftTrimBar.x, sound.duration, canvas.width);
+        let end = pixelToSeconds(trimbarsDrawer.rightTrimBar.x, sound.duration, canvas.width);
         console.log("start: " + start + " end: " + end);
         // from utils.js
-        playSound(ctx, decodedSound, start, end);
+        playSound(ctx, sound, start, end);
     };
 
 
@@ -94,11 +124,45 @@ window.onload = async function init() {
     canvasOverlay.onmouseup = (evt) => {
         // We stop dragging the trim bars (if they were being dragged)
         trimbarsDrawer.stopDrag();
+        // Save trim bar positions for current sound
+        trimBarPositions[currentSoundIndex].left = trimbarsDrawer.leftTrimBar.x;
+        trimBarPositions[currentSoundIndex].right = trimbarsDrawer.rightTrimBar.x;
     }
 
     // start the animation loop for drawing the trim bars
     requestAnimationFrame(animate);
 };
+
+// Generate a PLAY button for each sound
+function createPlayButton(index) {
+    let button = document.createElement('button');
+    button.textContent = 'Play sound ' + (index + 1);
+    button.onclick = function() {
+        displaySound(index);
+        // Play the sound when button is clicked
+        let sound = decodedSound[index];
+        let start = pixelToSeconds(trimbarsDrawer.leftTrimBar.x, sound.duration, canvas.width);
+        let end = pixelToSeconds(trimbarsDrawer.rightTrimBar.x, sound.duration, canvas.width);
+        playSound(ctx, sound, start, end);
+    };
+    document.body.appendChild(button);
+}
+
+function displaySound(index) {
+    // Save current trim bar positions before switching
+    trimBarPositions[currentSoundIndex].left = trimbarsDrawer.leftTrimBar.x;
+    trimBarPositions[currentSoundIndex].right = trimbarsDrawer.rightTrimBar.x;
+    
+    currentSoundIndex = index;
+    let sound = decodedSound[index];
+    waveformDrawer.init(sound, canvas, '#83E83E');
+    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+    waveformDrawer.drawWave(0, canvas.height);
+    
+    // Restore trim bar positions for this sound
+    trimbarsDrawer.leftTrimBar.x = trimBarPositions[index].left;
+    trimbarsDrawer.rightTrimBar.x = trimBarPositions[index].right;
+}
 
 // Animation loop for drawing the trim bars
 // We use requestAnimationFrame() to call the animate function

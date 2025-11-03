@@ -116,11 +116,6 @@ export default class WaveformDrawer {
         // So be careful, here sampleSize is always positive so we can use ~~
         this.sampleStep = this.sampleStep || ~~(sampleSize / 10);
 
-        // is this.sampleStep is 0, set it to 1
-        if (this.sampleStep < 1) {
-            this.sampleStep = 1;
-        }
-        
         // An audio sample can be stereo or mono, we average the peaks of each channel
         let channels = buffer.numberOfChannels;
 
