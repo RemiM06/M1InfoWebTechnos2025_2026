@@ -9,23 +9,45 @@ import { loadAndDecodeSound, playSound } from './soundutils.js';
 // The AudioContext object is the main "entry point" into the Web Audio API
 let ctx;
 
-const soundURLs = [
-    'https://upload.wikimedia.org/wikipedia/commons/a/a3/Hardstyle_kick.wav',
-    'https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c7/Redoblante_de_marcha.ogg/Redoblante_de_marcha.ogg.mp3',
-    'https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c9/Hi-Hat_Cerrado.ogg/Hi-Hat_Cerrado.ogg.mp3',
-    'https://upload.wikimedia.org/wikipedia/commons/transcoded/0/07/Hi-Hat_Abierto.ogg/Hi-Hat_Abierto.ogg.mp3',
-    'https://upload.wikimedia.org/wikipedia/commons/transcoded/3/3c/Tom_Agudo.ogg/Tom_Agudo.ogg.mp3',
-    'https://upload.wikimedia.org/wikipedia/commons/transcoded/a/a4/Tom_Medio.ogg/Tom_Medio.ogg.mp3',
-    'https://upload.wikimedia.org/wikipedia/commons/transcoded/8/8d/Tom_Grave.ogg/Tom_Grave.ogg.mp3',
-    'https://upload.wikimedia.org/wikipedia/commons/transcoded/6/68/Crash.ogg/Crash.ogg.mp3',
-    'https://upload.wikimedia.org/wikipedia/commons/transcoded/2/24/Ride.ogg/Ride.ogg.mp3'
-]
+let soundURLs = [];
+let presets = [];
     
 let decodedSounds = [];
 
 window.onload = async function init() {
     ctx = new AudioContext();
 
+    // Fetch presets from server
+    const response = await fetch('http://localhost:3000/api/presets');
+    presets = await response.json();
+
+    // Create dropdown menu
+    let select = document.createElement('select');
+    presets.forEach((preset, index) => {
+        let option = document.createElement('option');
+        option.value = index;
+        option.textContent = preset.name;
+        select.appendChild(option);
+    });
+    select.onchange = function() {
+        loadPresetSounds(parseInt(this.value));
+    };
+    document.body.insertBefore(select, document.querySelector("#buttonsContainer"));
+
+    // Load first preset
+    await loadPresetSounds(0);
+}
+
+async function loadPresetSounds(presetIndex) {
+    // Build sound URLs from preset
+    soundURLs = [];
+    let preset = presets[presetIndex];
+    
+    // Use samples array to build URLs
+    // sample.url already contains the folder name (e.g., "808/Kick 808X.wav")
+    preset.samples.forEach(sample => {
+        soundURLs.push(`http://localhost:3000/presets/${sample.url}`);
+    });
 
     // load and decode the sounds using Promise.all
     // we create an array of promises
@@ -36,6 +58,7 @@ window.onload = async function init() {
   
     // now we create a button for each sound
     let buttonsContainer = document.querySelector("#buttonsContainer");
+    buttonsContainer.innerHTML = ""; // Clear previous buttons
 
     decodedSounds.forEach((decodedSound, index) => {
         let button = document.createElement("button");

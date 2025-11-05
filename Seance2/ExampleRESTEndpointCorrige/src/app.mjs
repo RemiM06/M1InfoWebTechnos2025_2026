@@ -14,6 +14,12 @@ import {
 } from "./utils.mjs";
 
 export const app = express();
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    next();
+});
 app.use(express.json({ limit: "2mb" }));
 
 // configure multer for file uploads
@@ -63,6 +69,7 @@ export const DATA_DIR = process.env.DATA_DIR
 // http://localhost:3000/index.html
 // app.use should use a path that works on unix and windows
 app.use(express.static(PUBLIC_DIR));
+app.use(express.static('public'));
 
 // Ensure data dir exists at startup (best-effort)
 await fs.mkdir(DATA_DIR, { recursive: true }).catch(() => {});
