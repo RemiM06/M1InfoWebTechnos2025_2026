@@ -39,6 +39,9 @@ You will need:
 ### Exercise 4
 
 Look at Example4: it is the same as Example2 except that it shows a WAM Sampler at the end of the page. See it as an possible example of what you are going to develop during this course. Play with it, look at how it has been loaded in the page (see file host.js). See how the GUI and the processing part are clearly separated. See how it behaves like any simple AudioNode from the Web Audio API (it can be connected the same way to the audio graph), while obviously, it is made of its own Web Audio graph with dozens of nodes... Did this reminds you a Design Pattern?
+
+Oui, c'est le Pattern Composite. Le WAM Sampler cache sa complexité interne (un graphe de dizaines d'AudioNodes) derrière une interface simple (un seul AudioNode). On peut l'utiliser comme un node simple tout en bénéficiant de toute sa complexité interne
+
 Start looking at the examples in Exercise 5.
 
 ### Exercise 5
