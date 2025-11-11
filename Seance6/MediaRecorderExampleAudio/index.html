@@ -1,0 +1,24 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Recording audio with the MediaRecorder API</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/script.js"></script>
+</head>
+
+<body>
+    <div style="margin-bottom:10px;">
+        <button id="record">🎙️ Record</button>
+        <button id="stop">⏹️ Stop</button>
+        <button id="play">▶️ Play</button>
+        <button id="send">📤 Send to Server</button>
+    </div>
+
+    <progress id="progress" value="0" max="100" style="width:400px; display:none;"></progress>
+
+    <canvas width="600" height="200" style="border:1px solid #ccc; display:block; margin-top:10px;"></canvas>
+
+</body>
+
+</html>
