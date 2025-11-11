@@ -1,0 +1,48 @@
+:root {
+    --pad-size: 120px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(4, var(--pad-size));
+    gap: 14px;
+}
+
+.pad {
+    width: var(--pad-size);
+    height: var(--pad-size);
+    position: relative;
+}
+
+.pad.ready {
+    background: lightblue;
+}
+
+.pad.playing {
+    background: orange;
+}
+
+.pad.selected {
+    border: 3px solid green;
+}
+
+.wrapper {
+    position: relative;
+    width: 800px;
+    margin-top: 20px;
+}
+
+.wrapper canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: 1px solid black;
+}
+
+#waveformCanvas {
+    background: white;
+}
+
+#trimBarsCanvas {
+    background: transparent;
+}
